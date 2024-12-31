@@ -34,7 +34,8 @@
             align-items: center;
         }
 
-        .calendar-header div button {
+        .calendar-header div button,
+        .calendar-header div select {
             margin: 0 5px;
             padding: 5px 10px;
             border: 1px solid #ccc;
@@ -42,9 +43,11 @@
             cursor: pointer;
         }
 
-        .calendar-header div button.active {
-            background-color: green;
+        .calendar-header div select.active {
+            background-color: rgb(241, 158, 14);
             color: white;
+            border-radius: 10px;
+            height: 37px;
         }
 
         .calendar-grid {
@@ -59,6 +62,7 @@
             background-color: #f9f9f9;
             border: 1px solid #ccc;
             padding: 5px;
+            cursor: pointer;
         }
 
         .calendar-grid div .date {
@@ -66,6 +70,46 @@
             top: 5px;
             right: 5px;
             font-size: 14px;
+        }
+
+        .calendar-grid div .month-name {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 30px; /* Increased font size */
+            font-weight: bold;
+            color: #000000;
+        }
+
+        .calendar-grid div .platform-name {
+            position: absolute;
+            bottom: 10px;
+            left: 5px;
+            font-size: 12px; /* Adjusted font size */
+            color: #333;
+        }
+
+        .calendar-grid div .platform-names {
+            position: absolute;
+            bottom: 10px;
+            top: 8px;
+            border: none;
+            left: 30px;
+            font-weight: bold;
+            font-size: 12px; /* Adjusted font size */
+            color: #333;
+            background-color: rgb(252, 227, 211);
+        }
+
+        .calendar-grid div .red-dot {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translateX(-50%);
         }
 
         .post {
@@ -86,18 +130,14 @@
             background-color: white;
             border: 1px solid #ccc;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .popup input {
-            display: block;
-            margin-bottom: 10px;
-            padding: 5px;
-            width: 100%;
-            box-sizing: border-box;
+            max-height: 80%;
+            overflow-y: auto;
+            width: 300px;
         }
 
         .popup button {
             padding: 5px 10px;
+            margin-top: 10px;
         }
 
         .days-header {
@@ -107,6 +147,51 @@
             background-color: #e0e0e0;
             padding: 10px 0;
         }
+
+        .year-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .month-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+        }
+
+        .month-card h3 {
+            text-align: center;
+            margin: 0;
+            margin-bottom: 10px;
+        }
+
+        .month-card .calendar-grid {
+            grid-auto-rows: 50px;
+        }
+
+        .scheduled-posts {
+    top: 60%;
+    display: flex;
+    align-items: center;
+    height: 30px;
+    background-color: rgb(252, 227, 211) !important;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+
+        .scheduled-posts img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+
+        #monthYearDisplay {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -114,19 +199,31 @@
 <div class="calendar">
     <div class="calendar-header">
         <div>
-            <button id="weekViewBtn">Week</button>
-            <button id="monthViewBtn" class="active">Month</button>
-        </div>
-        <div>
             <span id="monthYearDisplay">June 2024</span>
         </div>
         <div>
             <button id="prevBtn">Back</button>
-            <button id="todayBtn">Today</button>
+            <div>
+                <select id="monthViewSelect" class="active">
+                    <option value="1" selected>Today</option>
+                    <option value="1">1 Month</option>
+                    <option value="2">2 Months</option>
+                    <option value="3">3 Months</option>
+                    <option value="4">4 Months</option>
+                    <option value="5">5 Months</option>
+                    <option value="6">6 Months</option>
+                    <option value="7">7 Months</option>
+                    <option value="8">8 Months</option>
+                    <option value="9">9 Months</                    </option>
+                    <option value="10">10 Months</option>
+                    <option value="11">11 Months</option>
+                    <option value="12">1 Year</option>
+                </select>
+            </div>
             <button id="nextBtn">Next</button>
         </div>
     </div>
-    <div class="days-header">
+    <div class="days-header" id="daysHeader">
         <div>Sunday</div>
         <div>Monday</div>
         <div>Tuesday</div>
@@ -138,160 +235,238 @@
     <div class="calendar-grid" id="calendarGrid">
         <!-- Calendar dates will be injected here -->
     </div>
+    <div class="year-grid" id="yearGrid">
+        <!-- Yearly view months will be injected here -->
+    </div>
 </div>
 
 <div class="popup" id="popup">
-    <h3>Edit Post</h3>
-    <label for="editTitle">Title:</label>
-    <input type="text" id="editTitle">
-    <label for="editDate">Date:</label>
-    <input type="date" id="editDate">
-    <button id="saveBtn">Save</button>
-    <button id="deleteBtn">Delete</button>
+    <h3>Posts</h3>
+    <div id="popupContent">
+        <!-- Post details will be injected here -->
+    </div>
     <button id="closeBtn">Close</button>
 </div>
-
 <script>
     const calendarGrid = document.getElementById('calendarGrid');
-    const monthYearDisplay = document.getElementById('monthYearDisplay');
-    const popup = document.getElementById('popup');
-    const editTitle = document.getElementById('editTitle');
-    const editDate = document.getElementById('editDate');
-    const saveBtn = document.getElementById('saveBtn');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const closeBtn = document.getElementById('closeBtn');
-    const weekViewBtn = document.getElementById('weekViewBtn');
-    const monthViewBtn = document.getElementById('monthViewBtn');
+const monthYearDisplay = document.getElementById('monthYearDisplay');
+const popup = document.getElementById('popup');
+const popupContent = document.getElementById('popupContent');
+const closeBtn = document.getElementById('closeBtn');
+const monthViewSelect = document.getElementById('monthViewSelect');
+const daysHeader = document.getElementById('daysHeader');
+const yearGrid = document.getElementById('yearGrid');
 
-    const posts = [
-        { date: '2024-06-19', title: 'LinkedIn Post 1', platform: 'LinkedIn' },
-        { date: '2024-06-19', title: 'Instagram Post 1', platform: 'Instagram' }
-    ];
+const posts = [
+    { date: '2024-06-11', title: 'LinkedIn Post 1', platform: 'LinkedIn' },
+    { date: '2024-06-19', title: 'Instagram Post 2', platform: 'Instagram' },
+    { date: '2024-06-23', title: 'Instagram Post 3', platform: 'Twitter' }
+    // Add more posts for testing, including posts on different platforms and dates
+];
 
-    const currentDate = new Date();
-    let selectedDate = currentDate;
-    let isWeekView = false;
-    
-    function renderCalendar() {
-        const year = selectedDate.getFullYear();
-        const month = selectedDate.getMonth();
-        
-        monthYearDisplay.textContent = `${selectedDate.toLocaleString('default', { month: 'long' })} ${year}`;
-        
+const currentDate = new Date();
+let selectedDate = currentDate;
+let isYearView = false;
+let monthsToShow = 1;
+
+function renderCalendar() {
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+
+    // Calculate start and end dates for display
+    const startDate = new Date(year, month);
+    const endDate = new Date(year, month + monthsToShow - 1);
+
+    // Format start and end month-year for display
+    const startMonthYear = startDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const endMonthYear = endDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    // Set display text
+    monthYearDisplay.textContent = `${startMonthYear} - ${endMonthYear}`;
+
+    calendarGrid.innerHTML = '';
+    yearGrid.innerHTML = '';
+    daysHeader.style.display = isYearView ? 'none' : 'grid';
+    calendarGrid.style.display = isYearView ? 'none' : 'grid';
+    yearGrid.style.display = isYearView ? 'grid' : 'none';
+
+    if (isYearView) {
+        renderYearView(year);
+    } else {
+        renderMultiMonthView(year, month);
+    }
+}
+
+function renderMultiMonthView(year, startMonth) {
+    const firstDayOfFirstMonth = new Date(year, startMonth, 1);
+    const firstDayIndex = firstDayOfFirstMonth.getDay();
+    const totalDays = [];
+
+    for (let month = startMonth; month < startMonth + monthsToShow; month++) {
+        const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+        for (let day = 1; day <= lastDayOfMonth; day++) {
+            totalDays.push(new Date(year, month, day));
+        }
+    }
+
+    const rows = Math.ceil((firstDayIndex + totalDays.length) / 7) * 7;
+
+    for (let i = 0; i < rows; i++) {
+        if (i < firstDayIndex) {
+            calendarGrid.appendChild(document.createElement('div'));
+        } else {
+            const date = totalDays[i - firstDayIndex];
+            const dateCell = createDateCell(date);
+            calendarGrid.appendChild(dateCell);
+        }
+    }
+}
+
+function renderYearView(year) {
+    for (let month = 0; month < 12; month++) {
+        const monthCard = document.createElement('div');
+        monthCard.classList.add('month-card');
+        monthCard.innerHTML = `<h3>${new Date(year, month).toLocaleString('default', { month: 'long' })}</h3>`;
+
+        const daysHeaderClone = daysHeader.cloneNode(true);
+        monthCard.appendChild(daysHeaderClone);
+
+        const calendarGridClone = document.createElement('div');
+        calendarGridClone.classList.add('calendar-grid');
+        monthCard.appendChild(calendarGridClone);
+
         const firstDayOfMonth = new Date(year, month, 1);
         const lastDayOfMonth = new Date(year, month + 1, 0);
         const firstDayIndex = firstDayOfMonth.getDay();
         const lastDayIndex = lastDayOfMonth.getDate();
-        
-        calendarGrid.innerHTML = '';
-        
-        if (isWeekView) {
-            const startOfWeek = selectedDate.getDate() - selectedDate.getDay();
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(selectedDate.setDate(startOfWeek + i));
-                const dateCell = createDateCell(date, year, month);
-                calendarGrid.appendChild(dateCell);
-            }
-        } else {
-            for (let i = 0; i < firstDayIndex; i++) {
-                const emptyCell = document.createElement('div');
-                calendarGrid.appendChild(emptyCell);
-            }
-            
-            for (let i = 1; i <= lastDayIndex; i++) {
-                const dateCell = createDateCell(new Date(year, month, i), year, month);
-                calendarGrid.appendChild(dateCell);
-            }
+
+        for (let i = 0; i < firstDayIndex; i++) {
+            const emptyCell = document.createElement('div');
+            calendarGridClone.appendChild(emptyCell);
         }
+
+        for (let day = 1; day <= lastDayIndex; day++) {
+            const date = new Date(year, month, day);
+            const dateCell = createDateCell(date, year, month);
+            calendarGridClone.appendChild(dateCell);
+        }
+
+        yearGrid.appendChild(monthCard);
+    }
+}
+
+function createDateCell(date) {
+    const dateCell = document.createElement('div');
+    dateCell.style.border = '1px solid #ccc';  // Add border for visibility
+    const day = date.getDate();
+    const monthName = date.toLocaleString('default', { month: 'short' });
+    dateCell.innerHTML = `<span class="date">${day}</span>`;
+
+    if (day === 1 && !isYearView) {
+        const monthLabel = document.createElement('span');
+        monthLabel.classList.add('month-name');
+        monthLabel.textContent = monthName;
+        dateCell.appendChild(monthLabel);
     }
 
-    function createDateCell(date, year, month) {
-        const dateCell = document.createElement('div');
-        dateCell.innerHTML = `<span class="date">${date.getDate()}</span>`;
-        const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-        
-        posts.filter(p => p.date === dateStr).forEach(post => {
-            const postDiv = document.createElement('div');
-            postDiv.classList.add('post');
-            postDiv.textContent = `${post.title} (${post.platform})`;
-            postDiv.onclick = () => openPopup(post, dateStr);
-            dateCell.appendChild(postDiv);
+    const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    const datePosts = posts.filter(p => p.date === dateStr);
+
+    if (monthsToShow === 1) {
+        const platforms = new Set();
+        datePosts.forEach(post => {
+            platforms.add(post.platform);
         });
-        
-        return dateCell;
-    }
-    
-    function openPopup(post, date) {
-        popup.style.display = 'block';
-        editTitle.value = post.title;
-        editDate.value = date;
-        saveBtn.onclick = () => savePost(post, date);
-        deleteBtn.onclick = () => deletePost(post);
-    }
-    
-    function closePopup() {
-        popup.style.display = 'none';
-    }
-    
-    function savePost(post, oldDate) {
-        post.title = editTitle.value;
-        const newDate = editDate.value;
-        
-        if (newDate !== oldDate) {
-            post.date = newDate;
+        platforms.forEach(platform => {
+            const platformName = document.createElement('div');
+            platformName.classList.add('platform-name');
+            platformName.textContent = platform;
+            dateCell.appendChild(platformName);
+        });
+    } else if (monthsToShow >= 2 && monthsToShow <= 11) {
+        if (datePosts.length > 0) {
+            const scheduledPostsDiv = document.createElement('div');
+            scheduledPostsDiv.classList.add('scheduled-posts');
+
+            const iconImg = document.createElement('img');
+            iconImg.src = 'https://icones.pro/wp-content/uploads/2021/06/icone-d-image-orange.png';
+            iconImg.alt = 'Icon';
+
+            const scheduledText = document.createElement('div');
+            scheduledText.classList.add('platform-names');
+            scheduledText.textContent = '+9 Posts';
+
+            scheduledPostsDiv.appendChild(iconImg);
+            scheduledPostsDiv.appendChild(scheduledText);
+            dateCell.appendChild(scheduledPostsDiv);
+
+            // Log the newly created element
+            console.log('Scheduled posts div created:', scheduledPostsDiv);
         }
-        
-        closePopup();
-        renderCalendar();
-    }
-    
-    function deletePost(post) {
-        const index = posts.indexOf(post);
-        posts.splice(index, 1);
-        closePopup();
-        renderCalendar();
+    } else if (monthsToShow === 12 && datePosts.length > 0) {
+        const redDot = document.createElement('div');
+        redDot.classList.add('red-dot');
+        dateCell.appendChild(redDot);
     }
 
-    document.getElementById('prevBtn').onclick = () => {
-        if (isWeekView) {
-            selectedDate.setDate(selectedDate.getDate() - 7);
-        } else {
-            selectedDate.setMonth(selectedDate.getMonth() - 1);
-        }
-        renderCalendar();
-    };
-    
-    document.getElementById('todayBtn').onclick = () => {
-        selectedDate = new Date();
-        renderCalendar();
-    };
+    dateCell.onclick = () => openPopup(dateStr);
 
-    document.getElementById('nextBtn').onclick = () => {
-        if (isWeekView) {
-            selectedDate.setDate(selectedDate.getDate() + 7);
-        } else {
-            selectedDate.setMonth(selectedDate.getMonth() + 1);
-        }
-        renderCalendar();
-    };
+    return dateCell;
+}
 
-    weekViewBtn.onclick = () => {
-        isWeekView = true;
-        weekViewBtn.classList.add('active');
-        monthViewBtn.classList.remove('active');
-        renderCalendar();
-    };
 
-    monthViewBtn.onclick = () => {
-        isWeekView = false;
-        monthViewBtn.classList.add('active');
-        weekViewBtn.classList.remove('active');
-        renderCalendar();
-    };
+function openPopup(dateStr) {
+    popup.style.display = 'block';
+    popupContent.innerHTML = '';
+    const datePosts = posts.filter(p => p.date === dateStr);
+    datePosts.forEach(post => {
+        const postDiv = document.createElement('div');
+        postDiv.classList.add('post');
+        postDiv.textContent = `${post.title} (${post.platform})`;
+        postDiv.onclick = () => navigateToPostDetails(post);
+        popupContent.appendChild(postDiv);
+    });
+}
 
-    closeBtn.onclick = closePopup;
-    
+function navigateToPostDetails(post) {
+    alert(`Navigating to details for post: ${post.title}`);
+}
+
+function closePopup() {
+    popup.style.display = 'none';
+}
+
+document.getElementById('prevBtn').onclick = () => {
+    if (isYearView) {
+        selectedDate.setFullYear(selectedDate.getFullYear() - 1);
+    } else {
+        selectedDate.setMonth(selectedDate.getMonth() - monthsToShow);
+    }
     renderCalendar();
+};
+
+document.getElementById('nextBtn').onclick = () => {
+    if (isYearView) {
+        selectedDate.setFullYear(selectedDate.getFullYear() + 1);
+    } else {
+        selectedDate.setMonth(selectedDate.getMonth() + monthsToShow);
+    }
+    renderCalendar();
+};
+
+monthViewSelect.onchange = () => {
+    isYearView = false;
+    monthsToShow = parseInt(monthViewSelect.value);
+    if (monthsToShow === 12) {
+        isYearView = true;
+    }
+    renderCalendar();
+};
+
+closeBtn.onclick = closePopup;
+
+renderCalendar();
+
 </script>
 
 </body>
